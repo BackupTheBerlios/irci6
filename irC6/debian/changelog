@@ -1,0 +1,17 @@
+irci6 (0.2a) unstable; urgency=low
+
+  * supporto canali.
+  * ricerca netfriend
+  * supporto chiave unica
+
+ -- leonardo <benkj@koopa>  Wed, 11 Oct 2003 21:27:21 +0000
+
+irci6 (0.1b-1) unstable; urgency=low
+
+  * Initial release.
+
+ -- leonardo <benkj@koopa>  Wed, 27 Aug 2003 20:55:42 +0000
+
+Local variables:
+mode: debian-changelog
+End:

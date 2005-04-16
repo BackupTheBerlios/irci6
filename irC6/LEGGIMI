@@ -1,0 +1,159 @@
+irC6
+~~~~
+irC6 e' un programma che fa da tramite fra un client IRC e un server C6,
+comportandosi quindi sia come un server IRC che come un client C6. Lanciato 
+senza argomenti si mette in ascolto su 127.0.0.1:6667 aspettando la connessione 
+di un client IRC. 
+I vantaggi di un programma di questo tipo sono:
+- avendo un sistema linux o *BSD su cui avviare irC6, e' possibile accedere 
+  alla rete C6 da qualunque sistema operativo che disponga di un client IRC
+- e' possibile ciattare su C6 dal proprio client IRC preferito, senza dover
+  imparare ad usare un nuovo programma (comodo soprattutto con i client 
+  multiserver come xchat irssi ecc. grazie ai quali e' possibile ciattare su 
+  IRC e C6 contemporaneamente nella stessa finestra)
+- irC6 dipende soltanto da una libreria (libevent) che e' leggera e facile da
+  installare. L'eterno dilemma tra qt gtk e curses si riduce soltanto alla 
+  scelta del client IRC
+Gli svantaggi invece sono:
+- un client C6 e' sicuramente piu' carino
+- IRC e ICPP sono due protocolli molto diversi... quindi per farli comunicare
+  occorrono degli stratagemmi (come i canali speciali tipo &irC6)
+
+installazione
+~~~~~~~~~~~~~
+Basta digiatare "make install" all'interno della dir di irC6. L'installazione 
+richiede libevent <http://monkey.org/~provos/libevent/>. Se non avete i 
+permessi per installare libevent copiate il file "event.h" nella 
+dir "missing" di irC6 e il file "libevent.a" nella dir "src" di irC6.
+Poiche' ho avuto qualche problema di timeout su linux con libevent-0.6 
+consiglio di installare almeno la versione 0.7, che risolve il problema.
+Chi usa Debian puo' digitare "make deb" per creare il pacchetto debian in
+../irci6_[vers]_[arch].deb
+
+
+utilizzo
+~~~~~~~~
+Le opzioni supportate sono:
+% irC6 -h
+usage: ./src/irC6	[-l listen_host] [-p listen_port]
+			[-H c6server_host] [-P c6server_port]
+			[-m max_connections] [-i] [-d] [-Q] [-v] [-h]
+
+-l e -p	cambiano rispettivamente l'host e la porta su cui stare in ascolto,
+	di default 127.0.0.1 6667
+-H e -P	cambiano l'host e la porta del server C6, di default 
+	c6login.tin.it 4800
+-m 	setta il numero massimo di client accettati contemporaneamente
+-i	da usare se si avvia irC6 da inetd tramite per esempio
+	"127.0.0.1:6667 stream tcp wait nobody /usr/local/bin/irC6 irC6 -i"
+-Q	disabilita il comando SQUIT
+-d	avvia il server in background
+-h 	mostra l'aiuto
+-v 	mostra la versione
+
+
+configurazione del client IRC
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Per configurare il client basta settare come host/porta lo host/porta 
+d'ascolto di irC6 (default quindi 127.0.0.1 6667), come username 
+(**ATTENZIONE** username, non nick!!) il vostro username atlantide e come 
+password la vostra password di atlantide. Se il vostro username e' del tipo
+"chiave unica" settate nel campo "nick" del client irc il nick che volete
+usare (ovviamente questo nick deve essere abilitato nella vostra 
+"chiave unica". Consultare il sito di atlantide per maggiori dettagli sul
+servizio "chiave unica"); se invece il vostro username del vecchio tipo
+il campo nick non e' necessario e viene ignorato da irC6 che provvedera' a 
+utilizzare come nick il vostro username. Appena connesso il server apre il 
+canale &irC6 che rappresenta la console del programma. Tramite essa e' 
+possibile gestire la nicklist e altre semplici operazioni che non avevano un 
+equivalente tra i comandi IRC. irC6 e' volutamente un programma "stupido" 
+nel senso che non salva la vostra configurazione, per salvare la nicklist 
+dovrete fare uno script per il vostro client oppure usare la notify-list: 
+appena connesso il client provvedera' a inviare la notify-list a irC6 che 
+provvedera' a trasformarla nella nicklist.  Nella nicklist (che sta nel canale 
+della console di sistema) sono presenti nick op, half-op, voice, e normali. 
+L'unico utente op e' il vostro nick, gli utenti half-op sono quelli online, 
+quegli voice sono offline e gli altri sono in lista nera. Per gestire la 
+nicklist non e' possibile usare i comandi abituali come MODE o OP ecc. ma 
+dovrete usare i comandi della console.
+
+
+alcuni comandi
+~~~~~~~~~~~~~~
+senza contare i soliti PRIVMSG QUIT ecc. essi sono
+SQUIT			fa uscire il server. Tutte le connessioni aperte
+			saranno chiuse. e' possibile disabilitare questo
+			comando con l'opzione -Q
+WHOIS			mostra qualche informazione sull'utente specificato 
+			come argomento. per informazioni piu' dettagliate 
+			usate il comando "profilo" della console
+MAIL nick messaggio	manda un email al nick attraverso atlantide. lo scopo
+			di questo comando e' mandare un messaggio ad un 
+			utente offline
+MODE mionick +a		setta lo status di occupato
+AWAY <messaggio>	come sopra
+MODE mionick -a		cancella lo status di occupato
+AWAY 			come sopra
+MODE mionick +n		setta lo status di "solo netfriend"
+MODE mionick -n		cancella lo status di "solo netfriend"
+MODE mionick +k		ignora i colori
+MODE mionick -k		mostra i colori (default)
+LIST			mostra la lista delle stanze del server
+
+
+stanze
+~~~~~~
+Le stanze possono essere gestite in generale come i canali in IRC. Per 
+entrare/uscire dalle stanze si usano quindi i soliti comandi JOIN/PART ecc.
+L'unica difficolta' e' che IRC non supporta alcuni caratteri nei nomi dei 
+canali che sono invece presenti nei nomi delle stanze di C6; in questo caso
+potete usare i comandi stanza_cod/stanza_decod (della console irC6) per 
+passare a nomi che irC6 e' in grado di capire. Es: la stanza "Open C6" 
+viene interpretata da irC6 come #Open%20C6. Se volete creare voi una nuova
+stanza dovete usare il comando crea_stanza della console di irC6; la sitassi 
+e' la seguente: "crea_stanza <stanza> <pubblica|privata> <topic>". 
+Es: "crea_stanza irC6 pubblica stanza ufficiale di irC6". 
+
+
+ricerca utenti
+~~~~~~~~~~~~~~
+La ricerca utenti in irC6 e' abbastanza complessa poiche' nel protocollo IRC
+non c'e' niente di simile. Ho aggiunto quindi un nuovo canale speciale che si
+apre digitanto "cerca" nella console irC6. Per avviare la ricerca per email
+basta digitare in questo canale speciale "email <email>". Per la ricerca per
+profilo si usano invece principalmente questi comandi: 
+ls, cerca, <campo> = <valore>.
+Si parte digitando "ls" per vedere la lista di campi disponibili. Una volta
+scelto il campo da modificare si usa "ls <campo>" per visualizzare i possibili
+valori che puo' assumere il campo. A questo punto si usa <campo> = <valore>
+per cambiare il valore di un campo. Una volta specificato 4 o piu' campi
+si puo' usare "cerca" per avviare la ricerca utenti.
+
+
+
+** DISCLAIMER **
+~~~~~~~~~~~~~~~~
+Questo programma e' stato sviluppato cercando di evitare i piu' comuni errori
+di programmazione ma SENZA tuttavia considerare la sicurezza come 
+obbiettivo finale.
+L'autore non si assume nessuna responsabilita' sugli eventuali danni causati
+da questo programma o dal suo utilizzo. Per ulteriori informazioni riferitevi
+alla licenza BSD presente all'inizio dei sorgenti, sotto la quale questo 
+programma e' stato rilasciato.
+Questo programma e' stato sviluppato seguendo unicamente le specifiche del
+"Protocollo C6" liberamente scaricabile da 
+<http://openc6.extracon.it/downloads/pubblici/protocollo-c6.txt>
+e di altri documenti e programmi presenti sul sito dell'openc6 project
+affinche' sia utilizzato ESCLUSIVAMENTE IN LOCALE. 
+Nonostante il server accetti piu' client contemporaneamente esso NON deve 
+essere utilizzato come server pubblico; questo sia per motivi di sicurezza
+che per motivi legali: non penso infatti che sia legale utilizzarlo in tal
+modo.
+Comunque ogni possibile utilizzo e' a discrezione dell'utente e l'autore 
+declina qualsiasi responsabilita' sulle eventuali conseguenze causate 
+dall'uso di questo programma.
+
+Buona chat :)
+
+								benkj
+

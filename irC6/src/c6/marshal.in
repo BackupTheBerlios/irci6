@@ -1,0 +1,11 @@
+conn_charp_charp_addrp::connection_t *, char *, char *, struct in_addr *
+conn::connection_t *
+conn_uintp::connection_t *, unsigned int *
+conn_charp_charp::connection_t *, char *, char *
+conn_int_charpp::connection_t *, int, char **
+conn_charp::connection_t *, char *
+conn_charp_char_charp::connection_t *, char *, char, char *
+conn_charp_uintp_charppp::connection_t *, char *, unsigned int *, char ***
+conn_charpp_charpp::connection_t *, char **, char **
+conn_uintp_charppp::connection_t *, unsigned int *, char ***
+conn_uintp_charppp_charppp::connection_t *, unsigned int *, char ***, char ***

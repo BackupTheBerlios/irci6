@@ -1,0 +1,12 @@
+Source: irci6
+Section: non-US/net
+Priority: optional
+Maintainer: Leonardo Banchi <benkj@antifork.org>
+Standards-Version: 0.2a
+Build-Depends: libevent (>= 0.7)
+
+Package: irci6
+Architecture: any
+Depends: ${shlibs:Depends}
+Description: C6 on IRC
+ Programma per ciattare su C6 con un client IRC  

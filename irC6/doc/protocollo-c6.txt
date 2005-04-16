@@ -1,0 +1,1073 @@
+Instant Communication and Presence Protocol                            
+Protocollo di comunicazione di C6                               BiGAlex
+Categoria: Informativo                                   Febbraio, 2002
+Documento: protocollo-c6.txt
+
+
+
+                        OFS ICPP 1.0 (Protocollo C6)
+               (Instant Communication and Presence Protocol)
+
+
+
+
+Indice
+
+
+   Stato di questo memo ............................................
+   1.  Prefazione ..................................................
+   2.  Convenzioni in questo documento .............................
+   3.  Introduzione ................................................
+   3.1 Crediti .....................................................
+   4.  Tavola riassuntiva dei comandi ..............................
+   5.  Sintassi semantica dei comandi ..............................
+   5.1 Convenzioni .................................................
+   5.2.1 Il comando HELO ...........................................
+   5.2.2 Analisi del comando HELO ..................................
+   5.3.1 Il comando LOGIN ..........................................
+   5.3.2 Analisi del comando LOGIN .................................
+   5.4.1 Il comando INFOLOGIN ......................................
+   5.4.2 Analisi del comando INFOLOGIN .............................
+   5.4.3 Il comando WELCOME ........................................
+   5.4.4 Analisi del comando WELCOME ...............................
+   5.5.1 Il comando REQ_PULS .......................................
+   5.5.2 Analisi del comando REQ_PULS ..............................
+   5.6.1 Il comando SND_PULS .......................................
+   5.6.2 Analisi del comando SND_PULS ..............................
+   5.7.1 Il comando REQ_USERS ......................................
+   5.7.2 Analisi del comando REQ_USERS .............................
+   5.8.1 Il comando SND_USERS ......................................
+   5.8.2 Analisi del comando SND_USERS .............................
+   5.9.1 Il comando DEL_USERS ......................................
+   5.9.2 Analisi del comando DEL_USERS .............................
+   5.10.1 Il comando NEW_USER ......................................
+   5.10.2 Analisi del comando NEW_USER .............................
+   5.11.1 Il comando EXIT_USER .....................................
+   5.11.2 Analisi del comando EXIT_USER ............................
+   5.12.1 Il comando OL_MESSAGE ....................................
+   5.12.2 Analisi del comando OL_MESSAGE ...........................
+   5.13.1 Il comando OF_MESSAGE ....................................
+   5.13.2 Analisi del comando OF_MESSAGE ...........................
+   5.14.1 Il comando SRV_MESSAGE ...................................
+   5.14.2 Analisi del comando SRV_MESSAGE ..........................
+   5.15.1 Il comando CHNG_STATUS ...................................
+   5.15.2 Analisi del comando CHNG_STATUS ..........................
+   5.16.1 Il comando PING ..........................................
+   5.16.2 Analisi del comando PING .................................
+   5.17.1 Il comando PONG ..........................................
+   5.17.2 Analisi del comando PONG .................................
+   5.18.1 Il comando LOGIN_NOUSER ..................................
+   5.19.1 Il comando LOGIN_ERRPASS .................................
+   5.20.1 Il comando LOGIN_USERCONN ................................
+   5.21.1 Il comando CLIENT_REQ_EXIT ...............................
+   5.21.2 Analisi del comando CLIENT_REQ_EXIT ......................
+   5.22.1 Il comando CLIENT_EXIT_OK ................................
+   5.23.1 Il comando REDIRECT ......................................
+   5.23.2 Analisi del comando REDIRECT .............................
+   5.24.1 Il comando TRANSPORT .....................................
+   6 Codifica/decodifica dei pacchetti .............................
+   6.0.1  Algoritmo in C codifica/decodifica dei pacchetti .........
+   7 Codifica password e nickname ..................................
+   7.0.1  Algoritmo in C codifica password e nickname ..............
+
+
+
+
+Stato di questo Memo
+
+   Questo documento deve  essere considerato  come un 'Internet-Draft',
+   cioè non è un manuale di referenza, ma solo un testo ancora 'work in
+   progress'.
+   
+
+
+1. Prefazione
+
+   Nel 1999 grazie ai  programmatori di Icona, è nato  C6 TinMessenger,
+   un Internet Messenger che consentiva a  degli utenti collegati ad un
+   server centrale, di inviarsi messaggi e scambiarsi files.
+   Successivamente, è stata  inclusa  anche  la funzione di 'Multichat'
+   cioè, è stato  possibile  entrare in dei  canali denominati 'stanze'
+   nelle quali era possibile chiacchierare anche se si era in più di 2.
+
+   Questo testo è fornito 'così com'è', senza garanzia di alcun tipo.
+   Lo scopo di questo testo, è consentire ai sistemi non-windows, l'uso
+   del protocollo di Icona. Ogni altro uso potrebbe rivelarsi illegale.
+   L'autore NON  SI DICHIARA  RESPONSABILE DI OGNI  ALTRO USO DI QUESTO
+   TESTO. Il  solo scopo di questo documento è informativo, per permet-
+   tere a coloro che non riescono a collegarsi tramite il protocollo di
+   Icona, poiché hanno un  Sistema Operativo  diverso da quello di Win-
+   dows, di usufruire ugualmente di questo servizio.
+   Ogni altro uso potrebbe essere ILLEGALE.
+
+
+
+2. Convenzioni in questo documento
+
+   [Count] non è lo stesso di prima: prima indicava i pacchetti inviati
+   dal server al client, ora indica quelli inviati dal client al server
+   quindi  attenzione!  Questo [Count] avrà  quindi (ora) valore 00 01,
+   essendo questo il primo pacchetto inviato dal client al server.
+
+   [Len] è, come prima, la lunghezza del pacchetto  dal byte successivo
+   ai due di [Len].
+   Esempio: (NB: il  pacchetto di  questo esempio è un  pacchetto PING)
+   10 0F 00 02 00 06 10 0B 00 02 00 00
+               \---/ <-- Dopo [Len] ci sono 6 bytes, il valore
+                                   di [Len] è 00 06
+
+
+
+3. Introduzione
+
+   C6 TinMessenger  permette di rilevare  la presenza di altri utenti e
+   comunicare con loro in tempo reale. Questa funzionalità è comunemen-
+   te chiamata 'Instant Messaging'.
+
+   Questo documento descrive la sintassi  e la semantica del protocollo
+   C6, il protocollo di comunicazione tra il server ed il client.
+   Le procedure che verranno descritte saranno:
+   - Autenticazione
+   - Uscita
+   - Gestione lista utenti
+   - Invio/ricezione di messaggi
+   - Cambio dello stato (online, solo per i netfriends, occupato)
+   - Controllo stato utente (Ping-Pong)
+   - Gestione canali
+
+   Il documento rispecchia il protocollo usato nel Messenger Release 42
+   build 4041, scritto nel 1999.
+
+
+
+3.1 Crediti
+
+   Un ringraziamento speciale va (in ordine alfabetico) a:
+
+   Andrea Censi        (Sviluppo client K6) 
+   BiGAlex             (Amministratore del progetto)
+   BlAcKm[S]           (Contatti coderz nuovo client) 
+   Dre@ms & Picol      (Codifica/decodifica pacchetti) 
+   Giorgio Alf.        (Sviluppo  altro  client Linux + errata  corrige
+                        protocollo C6)
+   Nonnopino           (Libreria codifica password)
+   Rodolfo Gi.         (Controllo c6term  sotto Linux + Errata  corrige
+                        protocollo C6)
+   Simone Gia.         (Ideazione sviluppo client per Miranda) 
+   Michele Cos.        (Errata corrige protocollo C6)
+
+
+
+4. Tavola riassuntiva dei comandi
+
+   Comando           Da        A        Descrizione
+   ====================================================================
+   HELO            | Server  | Client | Il  server  invia la  chiave di
+                   |         |        | codifica al client.
+   ----------------+---------+--------+--------------------------------
+   LOGIN           | Client  | Server | Il client  invia nick, password
+                   |         |        | codificata e nick codificato al
+                   |         |        | server.
+   ----------------+---------+--------+--------------------------------
+   INFOLOGIN       | Server  | Client | Il server  invia  messaggio  di
+                   |         |        | benvenuto, banners da mostrare,
+                   |         |        | informazioni su alcuni pulsanti
+                   |         |        | da mostrare.
+   ----------------+---------+--------+--------------------------------
+   WELCOME         | Server  | Client | Il server invia il MOTD.
+   ----------------+---------+--------+--------------------------------
+   REQ_PULS        | Client  | Server | Il client  richiede  altri pul-
+                   |         |        | santi da mostrare.
+   ----------------+---------+--------+--------------------------------
+   SND_PULS        | Server  | Client | Il server  replica,  inviando i
+                   |         |        | pulsanti richiesti.
+   ----------------+---------+--------+--------------------------------
+   REQ_USERS       | Client  | Server | Il client richiede  lo stato di
+                   |         |        | alcuni utenti, quelli nella li-
+                   |         |        | sta netfriends.
+   ----------------+---------+--------+--------------------------------
+   SND_USERS       | Server  | Client | Il server invia i nick degli u-
+                   |         |        | tenti online.
+   ----------------+---------+--------+--------------------------------
+   DEL_USERS       | Client  | Server | Il  client  elimina  utenti dai
+                   |         |        | netfriends.
+   ----------------+---------+--------+--------------------------------
+   NEW_USER        | Server  | Client | Il server avvisa il  client che
+                   |         |        | un utente nella sua  lista si è
+                   |         |        | collegato.
+   ----------------+---------+--------+--------------------------------
+   EXIT_USER       | Server  | Client | Il server avvisa il client  che
+                   |         |        | un utente nella sua  lista si è
+                   |         |        | scollegato.
+   ----------------+---------+--------+--------------------------------
+   OL_MESSAGE      | Client  | Server | Il client invia un messaggio ad
+                   |         |        | un utente online.
+   ----------------+---------+--------+--------------------------------
+   OF_MESSAGE      | Client  | Server | Il client invia un messaggio ad
+                   |         |        | un utente offline.
+   ----------------+---------+--------+--------------------------------
+   SRV_MESSAGE     | Server  | Client | Il server invia un messaggio ad
+                   |         |        | un utente.
+   ----------------+---------+--------+--------------------------------
+   CHNG_STATUS     | Client  | Server | Il client cambia stato (online,
+                   |         |        | solo netfriends, occupato).
+   ----------------+---------+--------+--------------------------------
+   PING            | Server  | Client | Il server pinga il client.
+   ----------------+---------+--------+--------------------------------
+   PONG            | Client  | Server | Il client risponde al ping.
+   ----------------+---------+--------+--------------------------------
+   LOGIN_NOUSER    | Server  | Client | Login errato: l'utente non esi-
+                   |         |        | ste.
+   ----------------+---------+--------+--------------------------------
+   LOGIN_ERRPASS   | Server  | Client | Login errato: password errata.
+   ----------------+---------+--------+--------------------------------
+   LOGIN_USERCONN  | Server  | Client | Login errato: utente già con-
+                   |         |        | nesso.
+   ----------------+---------+--------+--------------------------------
+   CLIENT_REQ_EXIT | Client  | Server | Il client  chiede  al server di
+                   |         |        | potersi scollegare.
+   ----------------+---------+--------+--------------------------------
+   CLIENT_EXIT_OK  | Server  | Client | Il server consente  l'uscita al
+                   |         |        | client.
+   ====================================================================
+
+
+
+5. Sintassi semantica dei comandi
+
+
+   5.1 Convenzioni
+
+   Verranno usati i caratteri [] per indicare una variabile da inviare,
+   mentre i bytes descritti sananno in HEX.
+   Esempio: 20 12 [Count] [Len] [Data]
+            \--|     \------|-----/
+               |            |
+         Dati in HEX     Variabili
+
+   [Count]: Indica il numero  di pacchetti  inviati (corrente pacchetto
+            incluso.
+   [Len]:   Indica la lunghezza  dal byte  immediatamente dopo len alla
+            fine del pacchetto.
+
+   Struttura: Sia [Len] che [Count] sono  composti da due  bytes in Big
+              Endian. Questo vuol dire che, dei due bytes, incrementerà
+              prima quello di destra e poi quello di sinistra.
+   Esempio: 00 00, 00 01, 00 02, [...] 00 FF, 01 00.
+
+
+
+   5.2.1 Il comando HELO
+
+   Il comando HELO, inviato dal server al client alla conessione  dello
+   stesso client, indica al client la chiave di codifica da usare.
+   La codifica verrà trattata più avanti in questo documento.
+
+
+   Formato del pacchetto:
+
+   20 12 [Count] [Len] 00 02 [LenChiave] [Chiave]
+   |  |                \---|   \-----------+ Lunghezza chiave e chiave
+   |  |                 \--+- Bytes sconosciuti
+   |  \- Identificativo comando server
+   \---- Identificativo del server
+
+
+
+   5.2.2 Analisi del comando HELO
+
+   Il primo  byte di  un pacchetto  inviato dal server  è sempre 20. Il
+   successivo indica il comando. Il 12 vuol infatti dire  che si tratta
+   del pacchetto nel quale il server invia la chiave di codifica.
+
+   [Count] è un contatore, che indica quanti pacchetti sono stati invi-
+   ati  fino a  quel momento. Essendo  la password, il  primo pacchetto
+   inviato esso sarà 00 01.
+
+   [Len], indica la lunghezza  alla fine  del pacchetto. La lunghezza è
+   calcolata dal byte  immediatamente successivo ai  due di [Len]. Dato
+   che la chiave ha lunghezza 8 bytes, [Len] sarà quindi 00 0B.
+
+   I bytes 00 02 sono sconosciuti.
+
+   [LenChiave] è la lunghezza della chiave, espressa con  un solo byte.
+   La chiave è di 8 bytes, per cui [LenChiave] è 08.
+
+   [Chiave] è la chiave  inviata dal  server. Essa verrà  usata poi per
+   codificare i pacchetti inviati dal client al server (quelli dal ser-
+   ver al client non saranno codificati).
+
+
+
+   5.3.1 Il comando LOGIN
+
+   Il comando LOGIN, inviato  dal client al  server, comunica al server
+   il nickname e la password  usati dall'utente per  entrare nella rete
+   C6.
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 01 [Count] [Len] [LenNick] [Nick] [LenPass]
+   [Pass] [LenNick2] [Nick2] 01 2A [IP] 00 14
+
+
+
+   5.3.2 Analisi del comando LOGIN
+
+   I primi due bytes, 10 0F, sono l'identificativo del client: ogni co-
+   mando inviato dal client inizierà coi bytes 10 0F.
+
+   [Count] non è lo stesso di prima: prima indicava i pacchetti inviati
+   dal server al client, ora indica quelli inviati dal client al server
+   quindi  attenzione!  Questo [Count] avrà  quindi (ora) valore 00 01,
+   essendo questo il primo pacchetto inviato dal client al server.
+
+   [Len] è, come prima, la lunghezza del pacchetto  dal byte successivo
+   ai due di [Len].
+   Esempio: (NB: il  pacchetto di  questo esempio è un  pacchetto PING)
+   10 0F 00 02 00 06 10 0B 00 02 00 00
+               \---/ <-- Dopo [Len] ci sono 6 bytes, il valore
+                                   di [Len] è 00 06
+
+   Tornando al pacchetto Login (l'esempio appena fatto era del pacchet-
+   to PING che è il  più breve, per farvi  capire rapidamente), abbiamo
+   10 01 (in particolare 01, dato che 10 sarà sempre uguale) è l'id del
+   comando inviato dal client.
+
+   [LenNick] è la lunghezza del nick, espressa con un solo byte.
+   Esempio: il nick è 'Peppe', [LenNick] sarà 05.
+
+   [Nick] è il nickname che l'utente desidera usare.
+
+   [LenPass] è la lunghezza  della  password codificata espressa con un
+   solo byte. La password  codificata è di  16 bytes, per cui [LenNick]
+   avrà valore 10.
+
+   [Pass] è la  password codificata. La codifica verrà  trattata più a-
+   vanti in questo documento.
+
+   [LenNick2] è la lunghezza del  nick codificato espressa  con un solo
+   byte. Il nick codificato è lungo 16 bytes. La codifica del nick, co-
+   me quella  della password, verrà trattata più avanti.
+
+   [Nick2] è il nick codificato.
+
+   01 2A sono sconosciuti.
+
+   [IP] è l'IP del client, espresso in 4 bytes (sempre Big Endian).
+   Esempio: k.j.x.y -> 0x(k), 0x(j), 0x(x), 0x(y)
+            127.0.0.1 -> 0x(127), 0x(0), 0x(0), 0x(1)
+            -> 7F 00 00 01
+   NOTA: 0x sta per hex.
+
+   00 14 sono sconosciuti.
+
+
+
+   5.4.1 Il comando INFOLOGIN
+
+   Con il comando INFOLOGIN, il server indica al client l'avvenuta con-
+   nessione, i banners pubblicirari, informazioni su alcuni pulsanti ed
+   il messaggio di benvenuto.
+
+
+   Formato del pacchetto:
+
+   20 01 [Count] [Len] 00 00 00 01 [NumBanners] [LenGif] [Gif]
+   [LenLink] [Link] [LenNome] [Nome] [NumPulsanti] 00 5A 01 [ID]
+   [LenLink] [Link] [LenDescr] [Descr] 00 00 00 14
+
+
+
+   5.4.2 Analisi del comando INFOLOGIN
+
+   Non vi lasciate intimidire dal comando: esso è più semplice  di quel
+   che voi possiate pensare.
+
+   00 00 00 01 sono sconosciuti.
+
+   [NumBanners] è il numero di banners da mostrare.
+   Esempio: se i banners da mostrare sono 5, [NumBanners] sarà 05
+
+   [LenGif] è la lunghezza di [Gif]
+
+   [Gif] è il percorso dove C6 scaricherà l'immagine Gif.
+   Esempio: http://www.peppe.com/images/immagine.gif
+
+   [LenLink] è la lunghezza di [Link]
+
+   [Link] è il link a cui punterà il browser.
+   Esempio: http://www.peppe.com
+
+   [LenNome] è la lunghezza di [Nome]
+
+   [Nome] è un nome univoco, non contenente spazi.
+   Esempio: Peppe_Gif
+
+   NB: Nel caso in cui i banners siano più di uno, le variabili che do-
+   vranno essere ripetute (tante volte quanto indica [NumBanners]) sono
+   [LenGif] [Gif] [LenLink] [Link] [LenNome] [Nome]!!!
+
+   [NumPulsanti] è il numero di pulsanti che il server invierà.
+
+   00 5A 01 sono sconosciuti.
+
+   [ID] è l'id del pulsante. NB: Questo numero deve  essere incrementa-
+   le e così generato: 48+ID (48 è ascii!).
+   Esempio: Primo pulsante 0x(48+1), secondo 0x(48+2) ecc ecc.
+   NOTA: 0x sta per hex.
+
+   [LenLink] Lunghezza  di [Link]. Stavolta [Link] indica  i pulsanti e
+   non i banners, quindi è diverso dal precedente!
+
+   [Link] è il link al quale punta il pulsante.
+   Esempio: http://www.tin.it/
+
+   [LenDescr] Lunghezza di [Descr]
+
+   [Descr] Indica la descrizione del pulsante.
+   Esempio: Vai in chat su Atlantide!
+
+   00 00 00 14 sono sconosciuti.
+
+
+
+   5.4.3 Il comando WELCOME
+
+   Il comando  WELCOME  viene  inviato dal  server al client ed invia a
+   quest'ultimo il Message Of The Day. Questo pacchetto deve essere in-
+   viato immediatamente dopo il comando INFOLOGIN.
+
+   Formato del pacchetto:
+
+   20 10 [Count] [Len] [LenBenvenuto] [Benvenuto]
+
+
+
+   5.4.4 Analisi del comando WELCOME
+
+   [Len] è la lunghezza alla fine del pacchetto
+
+   [LenBenvenuto] Lunghezza di [Benvenuto] espressa con 2 bytes in
+   Big Endian.
+
+   [Benvenuto] è il messaggio di benvenuto.
+   Esempio: Ciao e benvenuto su Open C6!
+
+
+
+   5.5.1 Il comando REQ_PULS
+
+   Con il comando REQ_PULS si richiedono ulteriori pulsanti al server.
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 0D [Count] [Len] 01 2A
+
+
+
+   5.5.2 Analisi del comando REQ_PULS
+
+   0D è l'ID di questo comando.
+
+   01 2A sono sconosciuti.
+
+
+
+   5.6.1 Il comando SND_PULS
+
+   Il comando SND_PULS, inviato dal server, indica al client le voci da
+   inserire in un  determinato  bottone (il penultimo al  centro con la
+   voce Web) questi links.
+
+
+   Formato del pacchetto:
+
+   20 15 [Count] [Len] [NumPuls] [LenDescr] [Descr] [LenLink] [Link]
+
+
+
+   5.6.2 Analisi del comando SND_PULS
+
+   Comando alquanto semplice (l'INFOLOGIN era il  più complesso a causa
+   della gran mole di dati trasmessa), il SND_PULS ci permette di inse-
+   rire dei links alla voce Web. Il suo ID  è 15, come vediamo dal pac-
+   chetto.
+
+
+   [NumPuls] è un valore come [Len], cioè a due bytes in Big Endian che
+   indica il numero di links da inserire.
+   Esempio: abbiamo 4 links da inserire, il suo valore sarà 00 04.
+
+   [LenDescr] indica la lunghezza di [Descr]
+
+   [Descr] E' la descrizione del link.
+   Esempio: Aiuto!
+
+   [LenLink] E' la lunghezza del link a cui punta la descrizione prece-
+   dente.
+
+   [Link] Il link a cui punta la precedente descrizione
+   Esempio: http://atlantide.tin.it/faq/
+
+   NB: Nel caso in cui [NumPuls] sia  maggiore di uno, le variabili che
+   dovranno essere ripetute (tante volte quanto  indica [NumPuls]) sono
+   [LenDescr] [Descr] [LenLink] [Link]!!!
+
+
+
+   5.7.1 Il comando REQ_USERS
+
+   Il comando REQ_USERS, inviato dal client al server permette di rice-
+   vere dal server gli utenti online.
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 03 [Count] [Len] [NumNick] [LenNick] [Nick]
+
+
+
+   5.7.2 Analisi del comando REQ_USERS
+
+   L'ID di questo comando è 03.
+
+   [NumNick] è il numero di nick da controllare espresso in due bytes
+   Big Endian.
+   Esempio: i nick sono Peppe e GiGiTrottola, [NumNick] è 00 02
+   Esempio2: i nick sono 257, [NumNick] è 01 01
+
+   [LenNick] è la lunghezza di [Nick]
+
+   [Nick] è il nick da controllare
+   Esempio: Peppe87
+
+
+
+   5.8.1 Il comando SND_USERS
+
+   Una volta richiesti i nick online, il server ci invia gli utenti che
+   sono collegati.
+
+
+   Formato del pacchetto:
+
+   20 06 [Count] [Len] [NumNick] [LenNick] [Nick]
+
+
+
+   5.8.2 Analisi del comando SND_USERS
+
+   L'ID di questo comando  è 06. Da ora in poi  non lo specificherò più
+   poichè credo che riusciate a ricavarlo da soli.
+
+   [NumNick], come prima è il numero di nick, online stavolta, espresso
+   in due bytes Big Endian.
+
+   [LenNick] è la lunghezza di [Nick]
+
+   [Nick] è il nick online.
+
+   NB: Anche qui se [NumNick] è maggiore  di uno, bisognerà ripetere le
+   variabili [LenNick] e [Nick].
+
+
+
+   5.9.1 Il comando DEL_USERS
+
+   Il comando DEL_USERS elimina dalla lista utenti che ha il server (il
+   server ha una lista utenti: alla connessione  di un utente nella no-
+   stra lista ci avverte!) un nick.
+
+
+   Formato del pacchetto:
+
+   10 0F [Contat] [Len] 10 04 [Contat] [Len] [NumNick] [LenNick] [Nick]
+
+
+
+   5.9.2 Analisi del comando DEL_USERS
+
+   [NumNick] è, come nel comando  precedente, il numero di nick da con-
+   trollare, espresso in 2 bytes BigEndian.
+
+   [LenNick] è la lunghezza di [Nick].
+
+   [Nick] è il nick da controllare.
+
+   Anche qui se [NumNick] è maggiore di uno  bisogna ripetere le varia-
+   bili [LenNick] e [Nick].
+
+
+
+   5.10.1 Il comando NEW_USER
+
+   Col comando  NEW_USER il server  ci informa della  connessione di un
+   nostro netfriend.
+
+
+   Formato del pacchetto:
+
+   20 0A [Count] [Len] [LenNick] [Nick] 01
+
+
+
+   5.10.2 Analisi del comando NEW_USER
+
+   L'ultimo byte 00 indica che il client è online (vedremo poi  che con
+   00 indica l'uscita)
+
+
+
+   5.11.1 Il comando EXIT_USER
+
+   Con il comando  EXIT_USER il  server segnala ai clients  che un loro
+   netfriend si è scollegato.
+
+
+   Formato del pacchetto:
+
+   20 0A [Count] [Len] [LenNick] [Nick] 00
+
+
+
+   5.11.2 Analisi del comando EXIT_USER
+
+   L'ultimo byte (00) indica che un client si è scollegato.
+
+
+
+   5.12.1 Il comando OL_MESSAGE
+
+   Il comando OL_MESSAGE consente ad un utente di  inviare un messaggio
+   ad un altro  utente che  è online. Di fatti, C6  stesso distingue un
+   messaggio online da  uno offline. Il messaggio offline  sarà infatti
+   l'argomento successivo.
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 08 [Count] [Len] [LenNick1] [Nick1] 00 01
+   [LenNick2] [Nick2] [Len] [Stile] [Messaggio]
+
+
+
+   5.12.2 Analisi del comando OL_MESSAGE
+
+   [Nick1] è il nickname di colui che invia il messaggio.
+
+   [Nick2] è il nickname di colui che riceve il messaggio.
+
+   [Messaggio] è il messaggio da inviare.
+
+   [Stile] è composto da 2 bytes e permette di definire il carattere di
+   un messaggio. Il primo byte varia, mentre il secondo è sempre 00.
+   Per i valori che può assumere, vedere il comando 5.14.2
+
+
+
+   5.13.1 Il comando OF_MESSAGE
+
+   Il comando OF_MESSAGE permette ad un utente  di inviare un messaggio
+   ad un utente che al momento non è online. Distinzione tra utenti on-
+   line e offline, è fatta dal  client stesso, che decide se inviare un
+   OL_MESSAGE o un OF_MESSAGE.
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 09 [Count] [Len] [LenNick1] [Nick1] 00 01
+   [LenNick2] [Nick2] [Len] [Messaggio]
+
+
+
+   5.13.2 Analisi del comando OF_MESSAGE
+
+   [Nick1] è il nickname del mittente del messaggio.
+
+   [Nick2] è il nickname del destinatario del messaggio.
+
+   [Messaggio] è il messaggio da inviare.
+
+
+
+   5.14.1 Il comando SRV_MESSAGE
+
+   Con il comando  SRV_MESSAGE inviato dal server  al client, il server
+   distribiusce i messaggi online ai clients destinatari del messaggio.
+
+
+   Formato del pacchetto:
+
+   20 0F [Count] [Len] [LenMittente] [Mittente] [LenDestinatario]
+   [Destinatario] [Len] [Stile] [Messaggio]
+
+
+
+   5.14.2 Analisi del comando SRV_MESSAGE
+
+   [Mittente] è il nickname del mittente del messaggio.
+
+   [Destinatario] è il nickname del destinatario del messaggio.
+
+   [Messaggio] è il messaggio da inviare.
+
+   [Stile] è composto da 2 bytes e permette di definire il carattere di
+   un messaggio. Il primo byte varia, mentre il secondo è sempre 00.
+   Questi sono i valori che può assumere il primo byte:
+
+   00 Normale
+   01 Corsivo
+   02 Normale
+   03 Grassetto
+   04 Arancione grassetto
+   05 Corsivo
+   06 Verde
+   07 Rosso grassetto
+   08 Corsivo con sfondo verde
+   09 Sfondo verde
+   0A Rosso grassetto sfondo verde
+   0B Rosso grassetto (anche il nick)
+   0C Rosso corsivo (anche il nick)
+
+
+
+   5.15.1 Il comando CHNG_STATUS
+
+   Grazie  al comando CHNG_STATUS  il client comunica  al server il suo
+   stato (libero, solo netfriends, occupato).
+
+
+   Formato del pacchetto:
+
+   10 0F [Count] [Len] 10 0A [Count] [Len] [Stato]
+
+
+
+   5.15.2 Analisi del comando CHNG_STATUS
+
+   [Stato] Indica lo stato del client. I valori  possibili sono gestiti
+   nel seguente modo:
+
+   Il byte elaborato è formato  da 8 bit: ogni bit ha una sua funzione.
+
+   abcdefgh
+
+   'a' è riservato per usi futuri.
+   'b' significa probabilmente  che il client  è online (ad ogni modo è
+       impostato sempre su 1.
+   'c' probabilmente indica che  il client supporta  la modalità confe-
+       renza.
+   'd' indica che il client è occupato.
+   'e' indica che il client è disponibile solo per i netfriends.
+   'f' indica che il client è disponibile.
+   'g' è sconosciuto.
+   'h' indica se l'ip è visibile o no.
+
+
+   5.16.1 Il comando PING
+
+   Il comando PING, inviato dal server al client, permette al server di
+   controllare se  un client è  ancora online o è  andato offline senza
+   inviare il comando di chiusura e senza chiudere il socket.
+
+
+   Formato del pacchetto:
+
+   20 11 [Contat] [Len]
+
+
+
+   5.16.2 Analisi del comando PING
+
+   Non essendoci nulla dopo, [Len] assume valore 00 00.
+
+
+
+   5.17.1 Il comando PONG
+
+   Il  comando PONG, inviato  dal client in  risposta  al comando PING,
+   comunica al server la persistenza della connessione del client.
+
+
+   Formato del pacchetto:
+
+   10 0F [Contat] [Len] 10 0B [Contat] [Len]
+
+
+
+   5.17.2 Analisi del comando PONG
+
+   L'ultimo [Len], non avendo alcunchè successivo, assume valore 00 00.
+
+   
+
+   5.18.1 Il comando LOGIN_NOUSER
+
+   Il comando LOGIN_NOUSER  comunica, all'atto del login, al client che
+   il nickname col quale si voleva effettuare il login è inesistente.
+
+
+   Formato del pacchetto:
+
+   20 0E [Contat] [Len]
+
+
+
+   5.19.1 Il comando LOGIN_ERRPASS
+
+   Il comando LOGIN_ERRPASS  comunica all'atto del  login al client che
+   la password inserita è errata.
+
+
+   Formato del pacchetto:
+
+   20 03 [Contat] [Len]
+
+
+
+   5.20.1 Il comando LOGIN_USERCONN
+
+   Il comando LOGIN_USERCONN comunica all'atto  del login al client che
+   il nickname specificato è già collegato.
+
+
+   Formato del pacchetto:
+
+   20 04 [Contat] [Len]
+
+
+
+   5.21.1 Il comando CLIENT_REQ_EXIT
+
+   Con il comando CLIENT_REQ_EXIT il client comunica al server l'uscita
+
+
+   Formato del pacchetto:
+
+   10 0F [Contat] [Len] 10 02 [Count] [Len] [LenNick] [Nick]
+   [NumeroLink] [LenLink1][Link1] 00 00 00 00 00 00 ([LenLink2] [Link2]
+   00 00 00 00 00 00 ecc ecc)
+
+
+
+   5.22.1 Analisi del comando CLIENT_REQ_EXIT
+
+   [Nick] in questo caso è il nickname dell'utente  che si deve scolle-
+   gare
+
+   [NumeroLink] è il numero di link ai banners che è stato inviato all'
+   inizio.
+
+   [LenLink1] è la lunghezza (un solo byte) del link.
+
+   [Link1] è il link del banner inviato col comando INFOLOGIN.
+   NB: LenLink1 e Link1  vanno ripetuti tante  volte quanti sono i ban-
+       ners.
+
+   Per il momento il significato dei 6 bytes nulli è sconosciuto.
+
+
+
+   5.22.1 Il comando CLIENT_EXIT_OK
+
+   Con il comando CLIENT_EXIT_OK il server  conferma la richiesta di u-
+   scita del client.
+
+
+   Formato del pacchetto:
+
+   20 05 [Contat] [Len]
+
+
+
+   5.22.1 Il comando REDIRECT
+
+   Con il comando REDIRECT si redirige il client  verso un altro server
+   e su un'altra porta.
+
+   Formato del pacchetto:
+
+   10 0F [Contat] [Len] 10 02 [IP] [Porta]
+
+
+
+   5.22.1 Analisi del comando REDIRECT
+
+   [IP] è formato da 4 bytes, ciascuno indicante un numero dell'IP.
+   Esempio: 97 00 00 01 sarebbe 127.0.0.1.
+
+   [Porta] è la porta alla  quale ci si deve  connettere, espressa in 2
+   bytes in Big Endian.
+
+
+
+   5.22.1 Il comando TRANSPORT
+
+   Con il comando TRANSPORT  il server  può inviare al  client dei pac-
+   chetti codificati (tutti i pacchetti inviati dal server sono in chi-
+   aro, tranne questo).
+
+   Formato del pacchetto:
+
+   20 18 [Contat] [Len] [Pacchetto]
+
+   In [Pacchetto] è contenuto un intero pacchetto codificato.
+   Esempio: 20 18 00 01 00 06 20 11 00 02 00 00.
+   In questo caso è stato inviato il pacchetto PING codificato con chi-
+   ave  nulla (cioè 00 00 00 00 00 00 00 00). Per decodificare  il pac-
+   chetto bisogna usare il normale algoritmo di codifica dei pacchetti,
+   che essendo XOR può codificare e decodificare con lo stesso algorit-
+   mo. Bisogna quindi decodificare a partire dal 7° byte, arrivando al-
+   la fine del pacchetto.
+
+
+6. Codifica dei pacchetti
+
+Ogni pacchetto inviato dal client al server è codificato, mentre invece
+i pacchetti inviati dal server al client non sono codificati.
+La codifica inizia dal 7° byte (incluso) in poi, dopo [Len].
+
+La codifica funziona nel seguente modo:
+(Tnx to Dre@ms & Picol!)
+
+La chiave utilizzata è generata casualmente ed è  costituita da 8 Byte;
+l'ultimo byte cioè l'8° sembra,  apparentemente, non avere alcun signi-
+ficato.
+I Restanti 7 Byte, nella fase di  codifica non vengono utilizzati nell'
+ordine in  cui sono  stati generati  e quindi  spediti inizialmente dal
+server, ma la chiave viene riordinata in base ad una regola:
+1)	Leggiamo il 6° Byte
+2)	Calcoliamo il MOD 7
+3)	Il risultato ottenuto  lo si usa  per determinare gli indici di
+        riordino della chiave, utilizzandolo come passo in una rotazio-
+        ne ciclica sui 7 numeri
+
+Esempio:
+
+Chiave Spedita dal server (in Hex)
+
+ 1  2  3  4  5  6  7  8
+_______________________
+64 63 66 45 51 59 63 4A
+
+Consideriamo il 6 Byte il numero 59 sempre in Hex.
+L'ottavo Byte in questo caso il 4A non viene considerato.
+Facciamo il MOD 7 : 59 MOD 7 = 5 (Passo)
+Il 5 diventa il  nostro Passo per riordinare  la chiave, si  procede in
+questo modo:
+
+Si parte sempre dalla posizione  1 quindi prendiamo e mettiamo da parte
+il numero 64.
+Ora sommiamo alla  posizione 1 il Passo, cioè 5, ottenendo la posizione
+6, preleviamo mettiamo da parte il numero 59.
+Sommiamo alla  posizione  ancora il passo 5, otteniamo  11, che risulta
+superiore a 7, facciamo  un Mod 7, ottenendo 4 quindi  procediamo  come
+sopra, prendendo il relativo numero 45.
+Risommiamo il passo ed otteniamo 9, superiore al 7, quindi Mod 7, otte-
+niamo 2, pendiamo il numero 63.
+Procedendo così avremo le posizioni 7° , 5° , 3° con i rispettivi nume-
+ri 63, 51, 66.
+L'ultima posizione  considerata è la 3° a  cui sommiamo 5  ottenendo 8,
+che possiamo  utilizzare come fine loop, oppure, continuando con la lo-
+gica del MOD, ne facciamo il Mod 7 otteniamo la posizione 1, che è una
+posizione già considerata.
+La chiave  riordinata che verrà  utilizzata per la decodifica  è la se-
+guente:
+
+ 1  6  4  2  7  5  3  8
+_______________________
+64 59 45 63 63 51 66 4A
+
+Suddividendo i dati  codificati a 7 Byte per volta e facendo lo'Xor con
+la chiave ordinata abbiamo i dati in chiaro:
+
+
+
+6.0.1  Algoritmo in C codifica/decodifica dei pacchetti
+
+Ecco il codice C che si occupa della codifica/decodifica dei pacchetti.
+(Tnx to Andrea Censi che ha rivisto e sintetizzato l'algoritmo in poche
+righe)
+
+void OrdinaKeyServer(const unsigned char *unordered, unsigned char
+ *ordered)
+{
+	int i;
+	for(i=0;i<7;i++) ordered[i] = unordered[(unordered[5]*i)%7];
+}
+
+void XorCode(const unsigned char *key
+	const unsigned char *crypted,
+	      unsigned char *plain,
+	      int            n)
+{
+	int a;
+	for(a=0;a<n;a++) plain[a] = crypted[a] ^ key[a%7] ;
+}
+
+
+
+7. Codifica password e nickname
+
+La password per l'autenticazione (ed anche il nickname codificato) sono
+generati secondo un algoritmo ibrido, in parte fatto  dai programmatori
+di Icona, in parte usa l'algoritmo MD5. StrCode è il testo da codifica-
+re, StrKeyServer è la chiave inviata dal server (NON ordinata), StrDest
+è la stringa nella quale verrà poi copiata la password/nickname codifi-
+cato, Psw permette  di scegliere  se codificare  il nickname o la pass-
+word: se deve essere codificata  la password, va impostato su true, al-
+trimenti su false.
+
+
+
+7.0.1 Algoritmo in C codifica password e nickname
+
+Questo è il codice C che permette di codificare password e nickname.
+NB: Per poter  funzionare serve  anche una libreria  per la codifica in
+MD5! (Potete scaricarla al sito openc6.extracon.it)
+
+void GenerKey(unsigned char *pDest,unsigned char *pSorg){
+    struct md5_context ctx;
+    md5_starts( &ctx );
+    md5_update( &ctx, (uint8 *) pSorg, strlen(pSorg));
+    md5_finish( &ctx, pDest );
+}
+
+void Codifica(unsigned char *StrCode,unsigned char 
+*StrKeyServer,unsigned char *StrDest,bool Psw){
+     unsigned char Strtemp[8]="ANOCI";
+     int temp;
+     unsigned char tt[30];
+
+     if (Psw)
+     {
+       int y = strlen(StrCode);
+       memcpy(tt,StrCode,y);
+       tt[y] = StrKeyServer[0];
+       tt[y+1] = StrKeyServer[2];
+       tt[y+2] =0;
+     }
+     else
+     {
+       memcpy(tt,Strtemp,5);
+       tt[5] = tolower(StrCode[strlen((char *)StrCode)-1]);
+       tt[6] = tolower(StrCode[0]);
+       tt[7] = StrKeyServer[4];
+       tt[8] = StrKeyServer[2];
+       tt[9] = 0;
+     }
+
+     GenerKey(StrDest,tt);
+
+       for(int i=0;i<16;i++)
+    {      //prende il resto della divisione per 94 di  ogni byte della
+           // key generata e somma 20h
+          temp=StrDest[i];
+          temp=temp % 0x5E;
+          temp+=0x20;
+          StrDest[i]=temp;
+      }
+}

@@ -1,0 +1,58 @@
+#! /bin/sh
+
+# $Id: gcc_test.sh,v 1.1 2005/04/16 09:23:19 benkj Exp $ */
+
+#
+# - irC6 -
+#
+# Copyright (c) 2003
+#	Leonardo Banchi		<benkj@antifork.org>.  
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
+# EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+# 
+# 
+#
+
+cat > .gcc_test.c << EOF
+int main() { 
+	float gcc_ver;
+
+	gcc_ver = (float)__GNUC__ + (float)((float)__GNUC_MINOR__ / 100.);
+	printf("+ GCC %g\n", gcc_ver);
+
+	if (gcc_ver < 2.95)
+		return -1;
+	else
+		return 0;
+}
+EOF
+
+$* -o .gcc_test.bin .gcc_test.c >/dev/null 2>&1
+
+if ! ./.gcc_test.bin; then
+	echo "per compilare irC6 serve gcc >= 2.95.x"
+	
+	exit 1
+fi
+exit 0

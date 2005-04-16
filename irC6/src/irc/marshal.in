@@ -1,0 +1,16 @@
+conn::connection_t *
+conn_charp::connection_t *, char *
+conn_charp_charp::connection_t *, char *, char *
+conn_charp_charp_charp::connection_t *, char *, char *, char *
+conn_charp_charp_charp_charp::connection_t *, char *, char *, char *, char *
+conn_charp_charp_charp_charp_charp::connection_t *, char *, char *, char *, char *, char *
+conn_uint::connection_t *, unsigned int
+conn_uint_charpp::connection_t *, unsigned int, char **
+conn_uint_charpp_charpp::connection_t *, unsigned int, char **, char **
+conn_charp_uint_charpp::connection_t *, char *, unsigned int, char **
+conn_charp_uint::connection_t *, char *, unsigned int
+conn_saddr::connection_t *, struct sockaddr_in *
+conn_charp_charp_timep_addrp_uint_charpp::connection_t *, char *, char *, struct tm *, struct in_addr *, unsigned int, char **
+conn_uint_charpp_uintp_uintp::connection_t *, unsigned int, char **, unsigned int *, unsigned int *
+conn_charp_charp_charp_uint_uint::connection_t *, char *, char *, char *, unsigned int, unsigned int
+conn_ptr_size::connection_t *, void *, size_t

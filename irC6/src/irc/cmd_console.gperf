@@ -1,0 +1,85 @@
+
+/* $Id: cmd_console.gperf,v 1.1 2005/04/16 09:23:23 benkj Exp $ */
+
+%{
+/*
+ * - irC6 -
+ *
+ * Copyright (c) 2003
+ *	Leonardo Banchi		<benkj@antifork.org>.  
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ * 
+ * 
+ */
+
+#include "irc/console.c"
+%}
+struct cmd_console {
+	char *name;
+	void (*func)(connection_t *, int, char **, char *);
+	char *aiuto;
+};
+%%
+aiuto,		NULL, "questo messaggio"
+agg,		c_add, "aggiungi un utente alla lista"
+canc,		c_del, "cancella un utente dalla lista"
+ln_agg, 	c_ignore, "aggiungi un utente alla lista nera"
+ln_canc, 	c_unignore, "cancella un utente dalla lista nera"
+profilo,	c_userinfo, "visualizza il profilo di un utente"
+stato,		c_status, "cambia stato. usare: stato <disponibile|occupato|amici>"
+stile,		c_style, "cambia stile di scrittura; usa `stile ?' per la lista" 
+stanza_cod,	c_roomenc, "codifica il nome di una stanza per usarla in irC6" 
+stanza_decod,	c_roomdec, "decodifica il nome di una stanza" 
+crea_stanza,	c_newroom, "crea una nuova stanza. usare: crea_stanza <stanza> <pubblica|privata> <topic>"
+mail,		c_mail,	"manda un email. usare: mail <nick> <messaggio>"
+cerca,		c_searchnicks, "cerca utenti"
+%%
+
+void
+irc_console_input(c, argc, argv, str)
+    connection_t *c;
+    int argc;
+    char **argv, *str;
+{
+	struct cmd_console *cl;
+	char *cmd;
+	int i;
+
+	if (argc  > 0) {
+		cmd = (*argv[0] == ':') ? argv[0] + 1 : argv[0];
+	
+		if ((cl = irc_cmd_console(cmd, strlen(cmd))) == NULL) {
+			IRC_CONSOLE(c, "%s: comando sconosciuto", cmd);
+			return;
+		}
+
+		if (cl->func == NULL) { /* aiuto */
+			for (i = 0; i < TOTAL_KEYWORDS; i++)
+				IRC_CONSOLE(c, "%s: %s", wordlist[i].name, 
+				    wordlist[i].aiuto);
+		} else 
+			(*cl->func)(c, argc - 1, argv + 1, str);
+	}
+}
